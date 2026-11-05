@@ -6,9 +6,37 @@ A self-hosted **n8n** workflow that reads a hospital's Google reviews every morn
 
 > All data in this repository is **made-up demo data**. The hospital name is a placeholder (`City Care Hospital`) set in the `Config` node.
 
-**Contents:** [Project flow](#project-flow-end-to-end) · [1. Problem](#1-the-problem) · [2. Approach](#2-cracking-it-the-approach) · [3. Training](#3-training-the-brain) · [4. Execution](#4-execution-how-it-runs) · [5. Results](#5-results) · [Impact](#impact) · [Run it](#run-it-in-5-minutes) · [Case study](docs/CASE_STUDY.md) · [Pipeline](docs/PROJECT_PIPELINE.md)
+**Contents:** [Bot flow](#bot-flow-at-a-glance) · [Project flow](#project-flow-end-to-end) · [1. Problem](#1-the-problem) · [2. Approach](#2-cracking-it-the-approach) · [3. Training](#3-training-the-brain) · [4. Execution](#4-execution-how-it-runs) · [5. Results](#5-results) · [Impact](#impact) · [Run it](#run-it-in-5-minutes) · [Case study](docs/CASE_STUDY.md) · [Pipeline](docs/PROJECT_PIPELINE.md)
 
 ---
+
+## Bot flow at a glance
+
+```
+  ⏰ Daily 9 AM (IST)            ▶️ Manual test run
+          └──────────────┬──────────────┘
+                         ▼
+                 ⚙️  Config  (mode: test / live, hospital name)
+                         ▼
+                 📒 Read_sheet  (skip reviews already handled)
+                         ▼
+                 📥 Get_Review  (Google Business Profile reviews)
+                         ▼
+                 🧠 Classify and decide  (words + tone → Reply / Exit)
+                         │
+          ┌──────────────┴───────────────────────────────┐
+          ▼                                              ▼
+     ❓ Positive?                               📝 Build_sheet_rows
+      │        │                                        ▼
+    yes        no                               📄 Convert to File
+      │        └──► 🚪 Exit – no reply                  ▼
+      ▼                                         💾 Save to Excel
+ 🛡️ Safety_check → 🔒 Safe_only                          ▼
+      ▼                                         📊 Done – report saved
+ 💬 Post_reply → 🏷️ Mark_result
+      ▼
+ ✅ Done – replied
+```
 
 ## Project flow (end to end)
 
