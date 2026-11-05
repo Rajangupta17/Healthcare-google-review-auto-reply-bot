@@ -1,0 +1,555 @@
+{
+  "name": "Healthcare Google Review Auto-Reply Bot",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "# 🏥 Healthcare Google Review Auto-Reply Bot\nReplies **only** to fully positive Google reviews · EN / HI / Hinglish · safety-checked · daily 9 AM\n**Rule:** no negative word + no negative tone + ≥1 positive word = Reply. Anything else = Exit.",
+        "width": 1180,
+        "height": 160,
+        "color": 6
+      },
+      "id": "bcffbbfd-7745-4af1-bd4b-2e92674782e5",
+      "name": "Note 93df",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -420
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## ⏰ START\nDaily 9 AM or manual test",
+        "width": 420,
+        "height": 420,
+        "color": 5
+      },
+      "id": "56a59ea6-9b0c-4337-a393-40cc8703cf65",
+      "name": "Note 379e",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -220
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 📥 READ\nSkip handled reviews, fetch new ones",
+        "width": 420,
+        "height": 420,
+        "color": 4
+      },
+      "id": "916edf70-759e-4e82-9467-95d5a5a1f95f",
+      "name": "Note af3c",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        400,
+        -220
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 🧠 DECIDE\nWords + tone → Reply / Exit",
+        "width": 420,
+        "height": 420,
+        "color": 3
+      },
+      "id": "8bce5799-abbf-4c9a-92c6-7e3d53f1ede7",
+      "name": "Note a324",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        840,
+        -220
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 💬 REPLY\nSafety check → post English reply",
+        "width": 1340,
+        "height": 260,
+        "color": 7
+      },
+      "id": "8bbc430e-00d2-4064-9314-95c9a6f42aab",
+      "name": "Note b291",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        -280
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 📊 LOG\nEvery review saved to Excel",
+        "width": 1120,
+        "height": 240,
+        "color": 1
+      },
+      "id": "0b3d6cff-8b35-41c4-b198-95cdebdd57ff",
+      "name": "Note 165c",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "4e029dd5-9fbf-4469-95e1-6decb6aafb81",
+      "name": "Manual test run",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 9,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "826d7ade-b03b-4ee0-bd40-f9bc8daa718a",
+      "name": "Daily 9 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c3a63bda-fb20-4f5c-965a-dda1f8ce92f6",
+              "name": "mode",
+              "value": "test",
+              "type": "string"
+            },
+            {
+              "id": "d8f386fb-7282-4b97-9315-0e21a79f4c13",
+              "name": "hospital_name",
+              "value": "City Care Hospital",
+              "type": "string"
+            },
+            {
+              "id": "6051705e-0e93-4716-ab5e-f3dffeac7eeb",
+              "name": "account_id",
+              "value": "PASTE_AFTER_API_APPROVAL",
+              "type": "string"
+            },
+            {
+              "id": "41e969f0-7f02-4793-92a9-9644ba2b30e8",
+              "name": "location_id",
+              "value": "PASTE_AFTER_API_APPROVAL",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c6f95809-f8b9-496f-9603-ed280bfbd818",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Read_sheet - list of Review IDs already handled (so a review is never handled twice).\n// Demo: empty history. In production, read your log (Excel / Google Sheets) here.\nreturn [{ json: { 'Review ID': '' } }];\n"
+      },
+      "id": "f68a0b4a-af6c-4885-ac12-4990a418cc78",
+      "name": "Read_sheet",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get_Review (DEMO DATA) - 20 made-up reviews in the Google Business Profile API format.\n// Replace this node with an HTTP Request to the Google API once access is approved (see README).\nconst reviews = [\n {\n  \"reviewId\": \"DEMO-01\",\n  \"reviewer\": {\n   \"displayName\": \"Aarav S.\"\n  },\n  \"starRating\": \"FIVE\",\n  \"createTime\": \"2026-01-01T10:00:00Z\",\n  \"comment\": \"Excellent care by the doctors and very supportive nursing staff. Thank you!\"\n },\n {\n  \"reviewId\": \"DEMO-02\",\n  \"reviewer\": {\n   \"displayName\": \"Priya M.\"\n  },\n  \"starRating\": \"FIVE\",\n  \"createTime\": \"2026-01-02T10:00:00Z\",\n  \"comment\": \"The nurses in the ICU were so caring and kind. Highly recommend this hospital.\"\n },\n {\n  \"reviewId\": \"DEMO-03\",\n  \"reviewer\": {\n   \"displayName\": \"Rohit K.\"\n  },\n  \"starRating\": \"FOUR\",\n  \"createTime\": \"2026-01-03T10:00:00Z\",\n  \"comment\": \"Good experience in OPD, the staff was polite and helpful.\"\n },\n {\n  \"reviewId\": \"DEMO-04\",\n  \"reviewer\": {\n   \"displayName\": \"Neha G.\"\n  },\n  \"starRating\": \"FIVE\",\n  \"createTime\": \"2026-01-04T10:00:00Z\",\n  \"comment\": \"Doctor ne bahut accha samjhaya, staff bhi badhiya hai. Shukriya!\"\n },\n {\n  \"reviewId\": \"DEMO-05\",\n  \"reviewer\": {\n   \"displayName\": \"Vikram T.\"\n  },\n  \"starRating\": \"FIVE\",\n  \"createTime\": \"2026-01-05T10:00:00Z\",\n  \"comment\": \"Emergency team was quick and very professional. Grateful for the care.\"\n },\n {\n  \"reviewId\": \"DEMO-06\",\n  \"reviewer\": {\n   \"displayName\": \"Sana A.\"\n  },\n  \"starRating\": \"FIVE\",\n  \"createTime\": \"2026-01-06T10:00:00Z\",\n  \"comment\": \"Clean rooms, tasty food and courteous housekeeping staff.\"\n },\n {\n  \"reviewId\": \"DEMO-07\",\n  \"reviewer\": {\n   \"displayName\": \"Karan P.\"\n  },\n  \"starRating\": \"FIVE\",\n  \"createTime\": \"2026-01-07T10:00:00Z\",\n  \"comment\": \"Smooth admission and discharge. Wonderful experience overall 👍\"\n },\n {\n  \"reviewId\": \"DEMO-08\",\n  \"reviewer\": {\n   \"displayName\": \"Meera J.\"\n  },\n  \"starRating\": \"FIVE\",\n  \"createTime\": \"2026-01-08T10:00:00Z\",\n  \"comment\": \"International wing staff were humble and cooperative. Thank you all.\"\n },\n {\n  \"reviewId\": \"DEMO-09\",\n  \"reviewer\": {\n   \"displayName\": \"Arjun D.\"\n  },\n  \"starRating\": \"THREE\",\n  \"createTime\": \"2026-01-09T10:00:00Z\",\n  \"comment\": \"Doctor was good but billing took 3 hours.\"\n },\n {\n  \"reviewId\": \"DEMO-10\",\n  \"reviewer\": {\n   \"displayName\": \"Pooja R.\"\n  },\n  \"starRating\": \"FOUR\",\n  \"createTime\": \"2026-01-10T10:00:00Z\",\n  \"comment\": \"Nice staff. Please improve the washroom cleaning.\"\n },\n {\n  \"reviewId\": \"DEMO-11\",\n  \"reviewer\": {\n   \"displayName\": \"Imran H.\"\n  },\n  \"starRating\": \"ONE\",\n  \"createTime\": \"2026-01-11T10:00:00Z\",\n  \"comment\": \"Worst experience, rude staff at reception and long waiting.\"\n },\n {\n  \"reviewId\": \"DEMO-12\",\n  \"reviewer\": {\n   \"displayName\": \"Anjali V.\"\n  },\n  \"starRating\": \"TWO\",\n  \"createTime\": \"2026-01-12T10:00:00Z\",\n  \"comment\": \"Doctor accha tha lekin nurses ne dhyan nahi diya.\"\n },\n {\n  \"reviewId\": \"DEMO-13\",\n  \"reviewer\": {\n   \"displayName\": \"Rahul N.\"\n  },\n  \"starRating\": \"FIVE\",\n  \"createTime\": \"2026-01-13T10:00:00Z\",\n  \"comment\": \"Good doctors. Why is the parking so costly?\"\n },\n {\n  \"reviewId\": \"DEMO-14\",\n  \"reviewer\": {\n   \"displayName\": \"Diya L.\"\n  },\n  \"starRating\": \"FOUR\",\n  \"createTime\": \"2026-01-14T10:00:00Z\",\n  \"comment\": \"Great treatment, we just had issue with the hygiene. Otherwise great service.\"\n },\n {\n  \"reviewId\": \"DEMO-15\",\n  \"reviewer\": {\n   \"displayName\": \"Sameer B.\"\n  },\n  \"starRating\": \"ONE\",\n  \"createTime\": \"2026-01-15T10:00:00Z\",\n  \"comment\": \"Kept waiting for 4 hours in emergency, nobody checked my father.\"\n },\n {\n  \"reviewId\": \"DEMO-16\",\n  \"reviewer\": {\n   \"displayName\": \"Kavya S.\"\n  },\n  \"starRating\": \"FIVE\",\n  \"createTime\": \"2026-01-16T10:00:00Z\",\n  \"comment\": \"Doctors are good. STAFF IS VERY RUDE AT BILLING COUNTER.\"\n },\n {\n  \"reviewId\": \"DEMO-17\",\n  \"reviewer\": {\n   \"displayName\": \"Farhan Q.\"\n  },\n  \"starRating\": \"THREE\",\n  \"createTime\": \"2026-01-17T10:00:00Z\",\n  \"comment\": \"The 2 stars I'm giving are only because of the doctors.\"\n },\n {\n  \"reviewId\": \"DEMO-18\",\n  \"reviewer\": {\n   \"displayName\": \"Nisha T.\"\n  },\n  \"starRating\": \"ONE\",\n  \"createTime\": \"2026-01-18T10:00:00Z\",\n  \"comment\": \"Bakwas service, paise ke liye hi sab kuch karte hain.\"\n },\n {\n  \"reviewId\": \"DEMO-19\",\n  \"reviewer\": {\n   \"displayName\": \"A Google User\"\n  },\n  \"starRating\": \"FIVE\",\n  \"createTime\": \"2026-01-19T10:00:00Z\",\n  \"comment\": \"\"\n },\n {\n  \"reviewId\": \"DEMO-20\",\n  \"reviewer\": {\n   \"displayName\": \"Ritu C.\"\n  },\n  \"starRating\": \"FIVE\",\n  \"createTime\": \"2026-01-20T10:00:00Z\",\n  \"comment\": \"Thanks for nothing at the pharmacy, great job making us wait.\"\n }\n];\nreturn [{ json: { reviews } }];\n"
+      },
+      "id": "c0ed3db8-dabb-4794-bbe6-9f35de6f0c4f",
+      "name": "Get_Review",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Healthcare Google Review Auto-Reply Bot - 'Classify and decide' node (n8n Code node, JavaScript)\n// Reads each review (English / Hindi / Hinglish), decides Reply or Exit from WORDS + TONE only (never stars),\n// and picks an English reply template for fully positive reviews.\n\n// ===== 1. WORD LISTS (edit here) =====\nconst POS = ['good','great','excellent','caring','helpful','clean','thank','thanks','professional','recommend','best','nice','supportive','polite','kind','kindness','grateful','gratitude','outstanding','exceptional','amazing','wonderful','wonderfull','satisfied','satisfactory','happy','appreciate','appreciated','thankful','thankyou','courteous','cooperative','compassion','compassionate','comfortable','smooth','reassuring','dedicated','efficient','hygienic','well','love','pleasant','welcoming','awesome','superb','experienced','politely','cordial','humble','respectful','incredible','knowledgeable','positive','positively','exceptional','excellent','helped','terrific','overwhelmed','supporting','comfort','attentive','tidy','passionate',\n  'accha','acha','achha','acche','ache','badhiya','badiya','shukriya','sukriya',\n  'अच्छा','अच्छे','अच्छी','बढ़िया','बढिया','धन्यवाद','शुक्रिया','बेहतरीन'];\nconst NEG = ['rude','worst','bad','waited','delay','delayed','overcharged','careless','dirty','unprofessional','pathetic','horrible','poor','useless','problem','problems','worse','awful','lazy','mosquitoes','cockroaches','complaint','inefficient','insufficient','unhygienic','negligence','irresponsible','harassment','misbehave','misbehaved','unavailable','overcrowded','chaos','pathetic','disappointed','disappointing','terrible','cheaters','cheater','cheating','incompetent','unresponsive','inept','disturbing','disturbed','dangerous','mismanagement','discrimination','termites','avoid','amateur','excessive','rush','angry','ignored','uncorporative','unhygienic','dirty','fraud','scam','rude',\n  'bekar','bekaar','ghatiya','loot','lootna','bakwas','faltu','gandagi','ganda','gandi','dhokha','mehenga','mehnga','lapravah','laparwah','badtameez','badtamiz','chor','beimaan',\n  'बुरा','बुरी','लापरवाह','बदतमीज़','बदतमीज','गंदा','घटिया','बेकार'];\nconst NEG_PHRASES = ['never again','dhyan nahi','koi nahi','kuch nahi','bilkul bhi nahi','time pe nahi','paise ke liye','sunwai nahi','nahi mila','nahi diya','nahi aaya','nobody checked','nobody helped','no one came','no one attended','no response','not attended','kept waiting','had to wait','waiting for hours','hours of waiting','not recommended','do not recommend','dont come','dont came','koi sunta nahi','wait karaya','paise zyada','no trace','not even','not working','no water','no proper','asked for money','not taking care','not good','1 star','2 star','2 stars','one star','two star','two stars','single star','zero star','minus rating','minus ratings','only because','hungry for money','grab your money','must avoid','not satisfied','not so good','needs some','needs improvement','need improvement','need to improve','need to increase','had issue','had an issue','had issues','issue with','issues with','less support'];\n// Harmless phrases removed before checking (they contain no/not but are praise)\nconst OK_PHRASES = ['did not face any problem','didnt face any problem','no need to wait'];\nconst CONTRAST = ['but','otherwise','however','although','except','lekin','magar','लेकिन','मगर'];\nconst NOT_BEFORE = ['not','no','never',\"didn't\",'dont',\"don't\"];\nconst NOT_AFTER = ['nahi','nahin','नहीं'];\nconst POS_EMOJI = ['👍','🙏','😊','❤'];\nconst NEG_EMOJI = ['😡','👎','😠','😤'];\nconst TOPICS = {\n  Doctor: ['doctor','doctors','dr','consultant','daktar','डॉक्टर'],\n  Nursing: ['nurse','nurses','sister','nursing','nicu','picu','baby','नर्स'],\n  Billing: ['bill','billing','charges','payment','insurance','tpa','paise','बिल'],\n  Waiting: ['wait','waited','waiting','delay','queue','line','hours','इंतज़ार','इंतजार'],\n  Food: ['food','canteen','meal','khana','खाना'],\n  Cleanliness: ['clean','dirty','washroom','toilet','hygiene','ganda','साफ़','गंदा'],\n  Parking: ['parking','पार्किंग'],\n  'International ward': ['international','wing'],\n  Emergency: ['emergency','casualty','er'],\n  'ICU / PICU / NICU': ['icu','picu','nicu'],\n  OPD: ['opd'],\n  'Staff behaviour': ['staff','staffs','behaviour','behavior','polite','cooperative','humble'],\n  Hospitality: ['hospitality','housekeeping','reception'],\n  Pharmacy: ['pharmacy','chemist']\n};\n\n// ===== 2. REPLY TEMPLATES – POSITIVE ONLY, ENGLISH ONLY (edit here) =====\n// Reviews in any language (English, Hindi, Hinglish) are READ, but every reply is in English.\n// RULE: all words positive -> the BOT replies automatically.\n//       anything else      -> EXIT: no reply, no email, nothing more. (Row is logged once so it is never read again.)\n// Hospital name comes from the Config node (field: hospital_name). Change it there, not here.\nlet HOSPITAL = 'City Care Hospital';\ntry { HOSPITAL = $('Config').first().json.hospital_name || HOSPITAL; } catch (e) {}\nconst SIGN = ' We care for you. – Team ' + HOSPITAL;\n// 100 English reply templates. {hospital} is filled from Config. Edit any line freely; keep {name} at the start.\nconst T = {\n \"Doctor\": [\n  \"Dear {name}, thank you for your kind words about our doctors. Your trust inspires our clinical team to keep delivering quality care.\",\n  \"Dear {name}, we are delighted that our doctor could support you so well. We will share your appreciation with the entire medical team.\",\n  \"Dear {name}, thank you for trusting our expert doctors with your care. It means a lot to everyone at {hospital}.\",\n  \"Dear {name}, your words of appreciation for our doctors are truly encouraging. Wishing you good health and happiness.\",\n  \"Dear {name}, thank you for recognising the dedication of our doctors. Patient-first care is at the heart of everything we do.\",\n  \"Dear {name}, we are so glad our doctors made you feel heard and cared for. Thank you for choosing {hospital}.\",\n  \"Dear {name}, thank you for sharing your positive experience with our doctor. Feedback like yours motivates our team every day.\",\n  \"Dear {name}, it is wonderful to hear that our doctors explained everything clearly to you. Thank you for your trust in {hospital}.\",\n  \"Dear {name}, thank you for appreciating the expertise and kindness of our doctors. We wish you and your family good health.\",\n  \"Dear {name}, we are grateful for your kind review of our medical team. Your trust is our greatest reward.\",\n  \"Dear {name}, thank you for your warm words. Our doctors will be happy to know they could make a difference for you.\",\n  \"Dear {name}, your appreciation for our doctors means a great deal to us. We look forward to caring for you whenever you need us.\",\n  \"Dear {name}, thank you for placing your trust in our doctors. Compassionate, expert care is our promise to every patient.\",\n  \"Dear {name}, we are pleased that you had a reassuring experience with our doctors. Thank you for choosing {hospital}.\",\n  \"Dear {name}, thank you for your heartfelt review. We will pass on your kind words to the doctor and the whole team.\"\n ],\n \"Nursing\": [\n  \"Dear {name}, thank you for appreciating our nursing team. Their compassion and dedication make {hospital} special.\",\n  \"Dear {name}, we will share your kind words with our dedicated nurses. They will be delighted to know they could support you.\",\n  \"Dear {name}, thank you for recognising the warmth and care of our nursing staff. Wishing you good health always.\",\n  \"Dear {name}, your appreciation for our nurses truly made our day. Thank you for trusting {hospital}.\",\n  \"Dear {name}, thank you for your lovely words about our nursing team. Caring for you and your family was our privilege.\",\n  \"Dear {name}, we are so glad our nurses made you feel comfortable and cared for. Thank you for sharing your experience.\",\n  \"Dear {name}, thank you for mentioning our nursing staff. Their round-the-clock care is the backbone of {hospital}.\",\n  \"Dear {name}, it is heartwarming to read your appreciation for our nurses. We will pass on your thanks to each of them.\",\n  \"Dear {name}, thank you for your kind review. Our nursing team works with heart, and your words mean a lot to them.\",\n  \"Dear {name}, we are grateful for your appreciation of our nurses' patience and kindness. Wishing you a healthy life ahead.\",\n  \"Dear {name}, thank you for trusting our nursing team with your care. Your encouragement inspires them every day.\",\n  \"Dear {name}, your thanks to our nursing staff will be shared with the entire team. We are glad you felt well looked after.\",\n  \"Dear {name}, thank you for highlighting the dedication of our nurses. Patient comfort and dignity are our priority.\",\n  \"Dear {name}, we are delighted that our nurses could support you and your family. Thank you for choosing {hospital}.\",\n  \"Dear {name}, thank you for your warm words for our nursing team. It is an honour to care for you.\"\n ],\n \"International ward\": [\n  \"Dear {name}, thank you for your kind words about our International Wing. We are proud to offer world-class care with a personal touch.\",\n  \"Dear {name}, we are delighted that you had a comfortable stay in our International Wing. Thank you for trusting {hospital}.\",\n  \"Dear {name}, thank you for appreciating our International Wing team. Their warmth and care make every stay feel like home.\",\n  \"Dear {name}, your appreciation for our International Wing means a lot to us. Wishing you and your family good health.\",\n  \"Dear {name}, thank you for choosing our International Wing. We will share your kind words with the entire team.\",\n  \"Dear {name}, we are glad our International Wing staff made your stay smooth and comfortable. Thank you for your trust.\",\n  \"Dear {name}, thank you for your lovely review of our International Wing. Personalised, compassionate care is our promise.\",\n  \"Dear {name}, it is wonderful to hear about your positive experience in our International Wing. Thank you for choosing {hospital}.\",\n  \"Dear {name}, thank you for recognising the care of our International Wing team. Your words inspire us to keep raising the bar.\",\n  \"Dear {name}, we are honoured that you trusted our International Wing with your care. Wishing you good health and happiness.\"\n ],\n \"Emergency\": [\n  \"Dear {name}, thank you for appreciating our emergency team. We are here for you around the clock.\",\n  \"Dear {name}, we are glad our emergency team could support you when it mattered most. Thank you for trusting {hospital}.\",\n  \"Dear {name}, thank you for recognising the quick response of our emergency staff. Round-the-clock care is our commitment to you.\",\n  \"Dear {name}, your kind words about our emergency department mean a lot to the team. Wishing you good health.\",\n  \"Dear {name}, thank you for your trust during a difficult moment. Our emergency team will be happy to read your words.\",\n  \"Dear {name}, we are grateful for your appreciation of our emergency staff. Their calm and care make all the difference.\",\n  \"Dear {name}, thank you for sharing your experience with our emergency team. We will pass on your thanks to everyone on duty.\",\n  \"Dear {name}, it means a lot to know our emergency team made you feel safe and supported. Thank you for choosing {hospital}.\",\n  \"Dear {name}, thank you for your kind review of our emergency services. We are always here when you need us.\",\n  \"Dear {name}, we are pleased that our emergency team could help you promptly. Wishing you and your family good health.\"\n ],\n \"Critical care\": [\n  \"Dear {name}, thank you for appreciating our critical care team. Their dedication, day and night, is what makes {hospital} special.\",\n  \"Dear {name}, we are grateful for your kind words about our critical care staff. Wishing your family good health and strength.\",\n  \"Dear {name}, thank you for trusting our critical care team. We will share your appreciation with every member of the team.\",\n  \"Dear {name}, your thanks to our critical care team means a great deal to them. Thank you for choosing {hospital}.\",\n  \"Dear {name}, thank you for recognising the care and attention of our critical care staff. We wish you good health always.\",\n  \"Dear {name}, we are touched by your appreciation of our paediatric care team. Caring for your little one was our privilege.\",\n  \"Dear {name}, thank you for your kind words about our care for your child. Wishing your family health and happiness.\",\n  \"Dear {name}, it is heartwarming to read your appreciation for our critical care team. Thank you for your trust.\",\n  \"Dear {name}, thank you for sharing your experience. Our critical care team works with heart, and your words inspire them.\",\n  \"Dear {name}, we are glad our critical care team could support you and your family. Thank you for choosing {hospital}.\"\n ],\n \"OPD\": [\n  \"Dear {name}, thank you for your kind review of our OPD services. We are glad your visit was smooth and comfortable.\",\n  \"Dear {name}, we are delighted that you had a good experience in our OPD. Thank you for trusting {hospital}.\",\n  \"Dear {name}, thank you for appreciating our OPD team. Making every visit easy and pleasant is our goal.\",\n  \"Dear {name}, your kind words about our OPD staff mean a lot to us. Wishing you good health.\",\n  \"Dear {name}, thank you for sharing your positive OPD experience. We will pass on your appreciation to the team.\",\n  \"Dear {name}, we are glad our OPD team could support you during your visit. Thank you for choosing {hospital}.\",\n  \"Dear {name}, thank you for your review. A smooth and caring OPD experience is what we strive for every day.\",\n  \"Dear {name}, it is wonderful to hear that our OPD staff were helpful and supportive. Thank you for your trust.\"\n ],\n \"Facility\": [\n  \"Dear {name}, thank you for noticing the clean and comfortable environment at {hospital}. Your feedback means a lot to our housekeeping team.\",\n  \"Dear {name}, we are glad you found our hospital clean and well maintained. Thank you for your kind words.\",\n  \"Dear {name}, thank you for appreciating our facilities. A safe, hygienic and welcoming environment is our priority.\",\n  \"Dear {name}, your kind words about our hospital environment will be shared with the team. Wishing you good health.\",\n  \"Dear {name}, thank you for recognising the efforts of our housekeeping and support staff. They will be delighted to read this.\",\n  \"Dear {name}, we are delighted that you had a comfortable experience at {hospital}. Thank you for choosing us.\",\n  \"Dear {name}, thank you for your review. We are proud of our team that keeps {hospital} clean, safe and welcoming.\",\n  \"Dear {name}, it is wonderful to hear that our facilities met your expectations. Thank you for your trust.\"\n ],\n \"Food\": [\n  \"Dear {name}, thank you for appreciating our food and dietary services. We will share your kind words with our kitchen team.\",\n  \"Dear {name}, we are glad you enjoyed the food during your stay. Thank you for your lovely feedback.\",\n  \"Dear {name}, thank you for your kind words about our dietary team. Good nutrition is an important part of good care.\",\n  \"Dear {name}, your appreciation for our food services means a lot to the team. Wishing you good health.\"\n ],\n \"Staff behaviour\": [\n  \"Dear {name}, thank you for appreciating the courtesy and support of our staff. Your kind words mean a lot to the whole team.\",\n  \"Dear {name}, we are glad our staff were polite, helpful and caring. Thank you for trusting {hospital}.\",\n  \"Dear {name}, thank you for recognising the cooperation of our team. We will share your appreciation with everyone.\",\n  \"Dear {name}, your kind words about our staff truly made our day. Wishing you good health and happiness.\",\n  \"Dear {name}, thank you for your lovely review. Warm and respectful care is what we aim to give every patient.\",\n  \"Dear {name}, we are delighted that our staff made you feel supported. Thank you for choosing {hospital}.\",\n  \"Dear {name}, thank you for mentioning our team members by name. They will be very happy to read your appreciation.\",\n  \"Dear {name}, it is wonderful to hear that our staff were humble and supportive. Thank you for your trust.\"\n ],\n \"General\": [\n  \"Dear {name}, thank you for trusting {hospital}. We are delighted to be part of your health journey.\",\n  \"Dear {name}, thank you for your kind words. We are glad you had a good experience with us.\",\n  \"Dear {name}, thank you for your appreciation. It means a lot to our whole team.\",\n  \"Dear {name}, we are grateful for your lovely review. Wishing you good health and happiness.\",\n  \"Dear {name}, thank you for choosing {hospital}. Your trust inspires us to keep delivering quality care.\",\n  \"Dear {name}, thank you for sharing your positive experience. We look forward to serving you whenever you need us.\",\n  \"Dear {name}, your kind feedback brightens our day. Thank you for being part of the {hospital} family.\",\n  \"Dear {name}, thank you for recommending {hospital}. We are honoured by your trust.\",\n  \"Dear {name}, we are delighted that you had a smooth experience at {hospital}. Wishing you and your family good health.\",\n  \"Dear {name}, thank you for your warm words. Compassionate, patient-first care is our promise to you.\",\n  \"Dear {name}, thank you for taking the time to share your experience. It encourages our entire team.\",\n  \"Dear {name}, we truly appreciate your kind review. Thank you for trusting {hospital} with your care.\"\n ]\n};\n\n// ===== 3. LOGIC (do not edit) =====\nconst STARS = { ONE: 1, TWO: 2, THREE: 3, FOUR: 4, FIVE: 5 };\nlet existing = new Set();\ntry { existing = new Set($('Read_sheet').all().map(i => String(i.json['Review ID'] || ''))); } catch (e) {}\n\nconst reviews = [];\nfor (const it of $input.all()) {\n  if (Array.isArray(it.json.reviews)) reviews.push(...it.json.reviews);\n  else if (it.json.reviewId) reviews.push(it.json);\n}\n\n\n// ===== TONE CHECKS (how the patient writes, not only which words) =====\n// Any of these = the review is NOT fully positive -> bot exits.\nconst TONE_SUGGEST = ['please improve','kindly improve','kindly work','should improve','must improve','need to work','request you to','hope they improve','look into','work on the','improve the','improvement'];\nconst TONE_SARCASM = ['thanks for nothing','what a joke','so called','only in name','go to four corners','mind my words','not even kidding'];\nconst TONE_HARDSHIP = ['worried','anxious','suffering','harassed','struggled','frustrated','frustrating','helpless','tension','pareshan','pareshani','dukhi','takleef','दुखी','परेशान','तकलीफ'];\nconst TONE_QUESTION_WORDS = ['how','why','what','where','kyun','kyon','kaise','kya','क्यों','कैसे','क्या'];\nconst SHORT_FORMS = /\\b(ICU|PICU|NICU|OPD|IPD|CTVS|ENT|CGHS|ECHS|TPA|MRI|CT|ER|NCR|DR|MR|MS|VIP|EWS|KFT|ECG|UTI|GDA|RML|AC|BP|ICU)\\b/g;\nfunction toneCheck(text, words) {\n  const t = text.toLowerCase(), pad = ' ' + words.join(' ') + ' ', out = [];\n  // 1. Shouting: 3+ CAPITAL words in a row (e.g. \"BUT THEIR ACCOUNTS DEPARTMENT\")\n  if (/(?:\\b[A-Z]{2,}\\b[\\s.,!]+){2,}\\b[A-Z]{2,}\\b/.test(text.replace(SHORT_FORMS, 'x'))) out.push('tone: shouting (CAPITALS)');\n  // 2. Complaint question: \"How will they...?\", \"Why ...?\", \"What's about ...?\"\n  text.split(/(?<=[.!?\\n])/).forEach(s => {\n    const sw = s.toLowerCase().split(/[^\\p{L}\\p{M}\\p{N}']+/u).filter(Boolean);\n    if (s.includes('?') && sw.some(w => TONE_QUESTION_WORDS.includes(w.replace(/'s$/, '')))) out.push('tone: complaint question');\n  });\n  if (/(^|\\s)(what's about|how much|how will|how can they|why do|why does|why is|why are)\\b/.test(t)) out.push('tone: complaint question');\n  // 3. Suggestion / request to improve\n  TONE_SUGGEST.forEach(p => { if (pad.includes(' ' + p + ' ')) out.push('tone: suggestion - ' + p); });\n  // 4. Sarcasm / taunt\n  TONE_SARCASM.forEach(p => { if (pad.includes(' ' + p + ' ')) out.push('tone: sarcasm - ' + p); });\n  // 5. Hardship / worry (even if it ends well, the bot stays out)\n  TONE_HARDSHIP.forEach(p => { if (words.includes(p)) out.push('tone: hardship - ' + p); });\n  // 6. Many !!! or ??? = strong emotion\n  if (/[!?]{3,}/.test(text)) out.push('tone: strong emotion (!!!/???)');\n  return [...new Set(out)];\n}\n\nfunction analyse(text) {\n  if (!text) return { sentiment: 'Unclear', noText: true, topics: '', blockers: [] };\n  let clean = text.toLowerCase();\n  OK_PHRASES.forEach(p => { if (!CONTRAST.some(c => clean.includes(' ' + c + ' '))) clean = clean.split(p).join(' '); });\n  const words = clean.split(/[^\\p{L}\\p{M}\\p{N}']+/u).filter(Boolean);\n  const padded = ' ' + words.join(' ') + ' ';\n  let pos = 0, neg = 0;\n  const blockers = [];                       // every reason the review is NOT fully positive\n  words.forEach((w, i) => {\n    const next = words[i + 1] || '';\n    if (POS.includes(w)) {\n      const before = words.slice(Math.max(0, i - 2), i), after = words.slice(i + 1, i + 3);\n      if (before.some(x => NOT_BEFORE.includes(x)) || after.some(x => NOT_AFTER.includes(x))) { neg++; blockers.push('negated praise: ' + w); }\n      else pos++;\n    }\n    if (NEG.includes(w)) { neg++; blockers.push('negative word: ' + w); }\n    if (CONTRAST.includes(w) || ((w === 'par' || w === 'पर') && words.slice(Math.max(0, i - 3), i).some(x => POS.includes(x))))\n      blockers.push('contrast word: ' + w);\n    const prev = words[i - 1] || '';\n    const isNumberAfter = /^\\d/.test(next) || ['room','bed','ward','wing'].includes(prev);   // \"room no 824\", \"bed no. 315\" are not negations\n    if ((NOT_BEFORE.includes(w) || NOT_AFTER.includes(w)) && !(w === 'no' && isNumberAfter))\n      blockers.push('negation word: ' + w);\n  });\n  NEG_PHRASES.forEach(p => { if (padded.includes(' ' + p + ' ')) { neg++; blockers.push('negative phrase: ' + p); } });\n  toneCheck(text, words).forEach(x => blockers.push(x));\n  if (POS_EMOJI.some(e => text.includes(e))) pos++;\n  if (NEG_EMOJI.some(e => text.includes(e))) { neg++; blockers.push('negative emoji'); }\n  let sentiment = 'Unclear';\n  if (neg > 0 && pos > 0) sentiment = 'Mixed';\n  else if (neg > 0) sentiment = 'Negative';\n  else if (pos > 0) sentiment = blockers.length ? 'Mixed' : 'Positive';   // praise + \"but/not\" = not fully positive\n  const topics = Object.keys(TOPICS).filter(t => TOPICS[t].some(k => words.includes(k)));\n  return { sentiment, noText: false, topics: topics.join(', ') || 'Other', blockers: [...new Set(blockers)] };\n}\nfunction pick(list, id) { let h = 0; for (const c of id) h = (h * 31 + c.charCodeAt(0)) % 9973; return list[h % list.length]; }\n\nconst out = [];\nfor (const r of reviews) {\n  if (!r.reviewId || existing.has(r.reviewId)) continue;   // already in the sheet\n  if (r.reviewReply) continue;                           // already answered on Google\n  let text = r.comment || '';\n  if (text.includes('(Original)')) text = text.split('(Original)').pop();\n  text = text.replace('(Translated by Google)', '').trim();\n  const a = analyse(text);\n  const stars = STARS[r.starRating] || 0;\n  const lang = /[\\u0900-\\u097F]/.test(text) ? 'hi' : 'en';\n  // Decision is made ONLY from the words. Stars are stored for reports but never used.\n  let sentiment = a.sentiment;\n  const blockers = [...a.blockers];\n  const raw = (r.reviewer && r.reviewer.displayName) || '';\n  const nameParts = raw.split(' ').filter(w => !/^(dr|dr\\.|mr|mr\\.|mrs|mrs\\.|ms|ms\\.)$/i.test(w));\n  const first = nameParts[0] || '';\n  const name = (!raw || raw === 'A Google User' || !first) ? 'Guest' : first.charAt(0).toUpperCase() + first.slice(1);\n  // Bot replies only when the WORDS are fully positive. No words (star-only review) = Rejected.\n  let set = null;\n  if (sentiment === 'Positive') {\n    const tp = a.topics;\n    if (/ICU/.test(tp)) set = T['Critical care'];\n    else if (/International ward/.test(tp)) set = T['International ward'];\n    else if (/Emergency/.test(tp)) set = T.Emergency;\n    else if (/Nursing/.test(tp)) set = T.Nursing;\n    else if (/Doctor/.test(tp)) set = T.Doctor;\n    else if (/OPD/.test(tp)) set = T.OPD;\n    else if (/Food/.test(tp)) set = T.Food;\n    else if (/Cleanliness|Hospitality/.test(tp)) set = T.Facility;\n    else if (/Staff behaviour/.test(tp)) set = T['Staff behaviour'];\n    else set = T.General;\n  }\n  const reply = set ? pick(set, r.reviewId).replace('{name}', name).split('{hospital}').join(HOSPITAL) + SIGN : '';\n  out.push({ json: {\n    'Review ID': r.reviewId,\n    'Review date': (r.createTime || '').slice(0, 10),\n    'Reviewer name': raw,\n    'Stars': stars,\n    'Review text': text,\n    'Sentiment': sentiment,\n    'Bot sentiment': sentiment,\n    'Topics': a.topics,\n    'Suggested reply': reply,\n    'Reply by': reply ? 'Bot' : '-',\n    'Action': reply ? 'Auto-reply' : 'Exit',\n    'Status': reply ? 'Bot will reply' : 'Not positive - exited (no reply)',\n    'Why exited': reply ? '' : (blockers.join('; ') || (a.noText ? 'no words to read (stars only)' : sentiment === 'Unclear' ? 'no clear positive words' : sentiment))\n  }});\n}\nreturn out;\n"
+      },
+      "id": "df19eb28-1c71-4e7c-b4bb-f76b80ab9a76",
+      "name": "Classify and decide",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9209f423-f354-4efe-be59-d3f30197abc0",
+              "leftValue": "={{ $json.Action }}",
+              "rightValue": "Auto-reply",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "fbf60785-8d40-402e-b59c-04ae9155db41",
+      "name": "Positive?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Checks every bot reply is safe to post publicly. Unsafe replies are NOT posted.\nconst HOSPITAL_PHONES = ['+91 00 0000 0000'];   // your hospital's public numbers (allowed in replies)\nconst HOSPITAL_EMAIL = 'info@example-hospital.com';   // your hospital's public email (allowed in replies)\nconst MEDICAL = ['diagnosis','diagnosed','surgery','operation','cancer','tumour','tumor','fracture','pregnancy',\n  'icu','chemotherapy','dialysis','prescription','medicine','test result','report'];\nreturn $input.all().map(item => {\n  const t = String(item.json['Suggested reply'] || '');\n  const low = t.toLowerCase();\n  const reasons = [];\n  if (item.json['Sentiment'] !== 'Positive') reasons.push('bot replies only to Positive reviews');\n  if (/(₹|\\brs\\.?|\\binr)\\s?\\d/i.test(t)) reasons.push('bill amount');\n  if (/\\b(room|bed|ward)\\s*(no\\.?|number)?\\s*\\d+/i.test(t)) reasons.push('room/bed number');\n  let clean = t; HOSPITAL_PHONES.forEach(p => { clean = clean.split(p).join(''); });\n  if (/\\d[\\d\\s-]{8,}\\d/.test(clean)) reasons.push('phone number');\n  const emails = t.match(/[\\w.+-]+@[\\w-]+\\.[\\w.]+/g) || [];\n  if (emails.some(e => e.toLowerCase().replace(/[.,;]+$/, '') !== HOSPITAL_EMAIL)) reasons.push('other email');\n  const words = low.split(/[^\\p{L}\\p{M}\\p{N}]+/u);\n  const med = MEDICAL.filter(m => m.includes(' ') ? low.includes(m) : words.includes(m));\n  if (med.length) reasons.push('medical word: ' + med.join(', '));\n  if (t.length < 20 || t.length > 600) reasons.push('reply too short or too long');\n  return { json: { ...item.json, safe: reasons.length === 0, reasons: reasons.join('; ') } };\n});\n"
+      },
+      "id": "87e61e8f-55fe-44b1-a92b-04bc7314317e",
+      "name": "Safety_check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().filter(i => i.json.safe === true);"
+      },
+      "id": "bf214306-84c2-43bd-abab-325b13ec64ed",
+      "name": "Safe_only",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Post_reply (TEST MODE) - simulates posting. Replace with an HTTP Request (PUT .../reviews/{id}/reply) after API approval.\nconst mode = $('Config').first().json.mode;\nreturn $input.all().map(item => ({ json: { reviewId: item.json['Review ID'], comment: item.json['Suggested reply'],\n  result: mode === 'test' ? 'SIMULATED - test mode, not sent' : 'NOT SENT - connect the Google HTTP Request node' }}));\n"
+      },
+      "id": "d5f70450-82c8-41a5-a680-df72119b7163",
+      "name": "Post_reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1780,
+        -160
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Mark_result - records what happened to each reply.\nconst sent = $('Safe_only').all();\nconst mode = $('Config').first().json.mode;\nconst now = $now.toFormat('yyyy-MM-dd HH:mm');\nreturn $input.all().map((r, i) => { const failed = !!r.json.error; return { json: {\n  'Review ID': sent[i].json['Review ID'],\n  'Status': failed ? 'Error - Google refused' : (mode === 'test' ? 'Posted by bot (TEST)' : 'Posted by bot'),\n  'Posted at': failed ? '' : now }}; });\n"
+      },
+      "id": "4eda2cd6-ba67-4d3e-8ef2-6068ca0db2ae",
+      "name": "Mark_result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        -160
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "719d38d4-bf8c-4fe8-8719-bf2be64a203e",
+      "name": "✅ Done – replied",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2220,
+        -160
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "96e9d240-4fe0-4715-aec7-3029511f4422",
+      "name": "🚪 Exit – no reply",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1340,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build_sheet_rows - one log row per review with its final result (posted, blocked or exited).\nconst rows = $('Classify and decide').all().map(i => ({ ...i.json }));\nlet safety = [], marks = [];\ntry { safety = $('Safety_check').all().map(i => i.json); } catch (e) {}\ntry { marks  = $('Mark_result').all().map(i => i.json); } catch (e) {}\nconst S = Object.fromEntries(safety.map(x => [x['Review ID'], x]));\nconst M = Object.fromEntries(marks.map(x => [x['Review ID'], x]));\nreturn rows.map(r => { const id = r['Review ID'];\n  if (r.Action === 'Auto-reply') {\n    if (S[id] && !S[id].safe) { r.Status = 'Blocked by safety - not posted: ' + S[id].reasons; r.Action = 'Exit'; }\n    else if (M[id]) { r.Status = M[id].Status; r['Posted at'] = M[id]['Posted at']; } }\n  return { json: r }; });\n"
+      },
+      "id": "ca5b3e60-a3d4-49ee-a3ba-2f8bcbb37be9",
+      "name": "Build_sheet_rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "data",
+        "options": {
+          "fileName": "review-log.xlsx",
+          "sheetName": "Reviews"
+        }
+      },
+      "id": "fd3a6999-612e-43ca-b97c-dcccfd037ff3",
+      "name": "Convert to File",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1560,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "C:/n8n-output/review-log.xlsx",
+        "dataPropertyName": "data",
+        "options": {}
+      },
+      "id": "7b556186-4aff-4d5d-b6ea-c71a7c81050a",
+      "name": "Save to Excel",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1780,
+        140
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "34b955b9-0d59-4601-8f88-6175868cc17d",
+      "name": "📊 Done – report saved",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2000,
+        140
+      ]
+    }
+  ],
+  "connections": {
+    "Manual test run": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily 9 AM": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Read_sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read_sheet": {
+      "main": [
+        [
+          {
+            "node": "Get_Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get_Review": {
+      "main": [
+        [
+          {
+            "node": "Classify and decide",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify and decide": {
+      "main": [
+        [
+          {
+            "node": "Positive?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Build_sheet_rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Positive?": {
+      "main": [
+        [
+          {
+            "node": "Safety_check",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "🚪 Exit – no reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Safety_check": {
+      "main": [
+        [
+          {
+            "node": "Safe_only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Safe_only": {
+      "main": [
+        [
+          {
+            "node": "Post_reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post_reply": {
+      "main": [
+        [
+          {
+            "node": "Mark_result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark_result": {
+      "main": [
+        [
+          {
+            "node": "✅ Done – replied",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build_sheet_rows": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Save to Excel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Excel": {
+      "main": [
+        [
+          {
+            "node": "📊 Done – report saved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata"
+  },
+  "pinData": {}
+}

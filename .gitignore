@@ -1,0 +1,9 @@
+# never commit outputs, real data or secrets
+*.xlsx
+*.csv
+.env
+client_secret*.json
+*credentials*.json
+output/
+private/
+.n8n/
